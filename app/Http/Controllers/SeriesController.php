@@ -34,8 +34,9 @@ class SeriesController extends Controller
     public function store(SeriesFormRequest $request)
     {
         //Obtem a imagem e armazena em '/storage/app/public'
-        $coverPath = $request->file('cover')
-            ->store('series_cover', 'public');
+        $coverPath = $request->hasFile ('cover')
+            ? $request->file('cover')->store('series_cover','public')
+            :null;
         $request->coverPath = $coverPath;
 
         $serie = $this->repository->addSerie($request);
@@ -55,7 +56,10 @@ class SeriesController extends Controller
     public function destroy(Series $series)
     {
         $series->delete();
-        DeleteSeriesCover::dispatch($series->cover);
+
+        if (!is_null($series->cover)) {
+            DeleteSeriesCover::dispatch($series->cover);
+        }
 
         return to_route('series.index')
             ->with('mensagem.sucesso', "Série '{$series->nome}' removida com sucesso");
